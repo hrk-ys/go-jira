@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/andygrunwald/go-jira"
+  packages = ["."]
+  revision = "acbc88d59582a4885dbd82fd775caa7c15245171"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/fatih/structs"
   packages = ["."]
   revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
@@ -20,17 +26,23 @@
   version = "v0.8.0"
 
 [[projects]]
-  name = "github.com/trivago/tgo"
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "91a49db82a88618983a78a06c1cbd4e00ab749ab"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
   packages = [
-    "tcontainer",
-    "treflect"
+    "unix",
+    "windows"
   ]
-  revision = "e4d1ddd28c17dd89ed26327cf69fded22060671b"
-  version = "v1.0.1"
+  revision = "dd2ff4accc098aceecb86b36eaa7829b2a17b1c9"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e84ca9eea6d233e0947b0d760913db2983fd4cbf6fd0d8690c737a71affb635c"
+  inputs-digest = "8192eda982147f0a8c1a70606807e1a8551f7455caadbb17a18136b558f92c61"
   solver-name = "gps-cdcl"
   solver-version = 1

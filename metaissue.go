@@ -1,10 +1,10 @@
 package jira
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/trivago/tgo/tcontainer"
 	"github.com/google/go-querystring/query"
 )
 
@@ -32,14 +32,14 @@ type MetaProject struct {
 // expect these for a general way. This will be returning a map.
 // Further processing must be done depending on what is required.
 type MetaIssueType struct {
-	Self        string                `json:"self,omitempty"`
-	Id          string                `json:"id,omitempty"`
-	Description string                `json:"description,omitempty"`
-	IconUrl     string                `json:"iconurl,omitempty"`
-	Name        string                `json:"name,omitempty"`
-	Subtasks     bool                  `json:"subtask,omitempty"`
-	Expand      string                `json:"expand,omitempty"`
-	Fields      tcontainer.MarshalMap `json:"fields,omitempty"`
+	Self        string                 `json:"self,omitempty"`
+	Id          string                 `json:"id,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	IconUrl     string                 `json:"iconurl,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Subtasks    bool                   `json:"subtask,omitempty"`
+	Expand      string                 `json:"expand,omitempty"`
+	Fields      map[string]interface{} `json:"fields,omitempty"`
 }
 
 // GetCreateMeta makes the api call to get the meta information required to create a ticket
@@ -58,7 +58,7 @@ func (s *IssueService) GetCreateMetaWithOptions(options *GetQueryOptions) (*Crea
 	if options != nil {
 		q, err := query.Values(options)
 		if err != nil {
-			return nil, nil , err
+			return nil, nil, err
 		}
 		req.URL.RawQuery = q.Encode()
 	}
@@ -72,6 +72,7 @@ func (s *IssueService) GetCreateMetaWithOptions(options *GetQueryOptions) (*Crea
 
 	return meta, resp, nil
 }
+
 // GetProjectWithName returns a project with "name" from the meta information received. If not found, this returns nil.
 // The comparison of the name is case insensitive.
 func (m *CreateMetaInfo) GetProjectWithName(name string) *MetaProject {
@@ -125,14 +126,14 @@ func (p *MetaProject) GetIssueTypeWithName(name string) *MetaIssueType {
 func (t *MetaIssueType) GetMandatoryFields() (map[string]string, error) {
 	ret := make(map[string]string)
 	for key := range t.Fields {
-		required, err := t.Fields.Bool(key + "/required")
-		if err != nil {
-			return nil, err
+		required, ok := t.Fields[key].(map[string]interface{})["required"].(bool)
+		if !ok {
+			return nil, errors.New("")
 		}
 		if required {
-			name, err := t.Fields.String(key + "/name")
-			if err != nil {
-				return nil, err
+			name, ok := t.Fields[key].(map[string]interface{})["name"].(string)
+			if !ok {
+				return nil, errors.New("")
 			}
 			ret[name] = key
 		}
@@ -146,9 +147,9 @@ func (t *MetaIssueType) GetAllFields() (map[string]string, error) {
 	ret := make(map[string]string)
 	for key := range t.Fields {
 
-		name, err := t.Fields.String(key + "/name")
-		if err != nil {
-			return nil, err
+		name, ok := t.Fields[key].(map[string]interface{})["name"].(string)
+		if !ok {
+			return nil, errors.New("")
 		}
 		ret[name] = key
 	}

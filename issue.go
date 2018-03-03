@@ -3,6 +3,7 @@ package jira
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/fatih/structs"
 	"github.com/google/go-querystring/query"
-	"github.com/trivago/tgo/tcontainer"
 )
 
 const (
@@ -128,7 +128,7 @@ type IssueFields struct {
 	Attachments          []*Attachment `json:"attachment,omitempty" structs:"attachment,omitempty"`
 	Epic                 *Epic         `json:"epic,omitempty" structs:"epic,omitempty"`
 	Parent               *Parent       `json:"parent,omitempty" structs:"parent,omitempty"`
-	Unknowns             tcontainer.MarshalMap
+	Unknowns             map[string]interface{}
 }
 
 // MarshalJSON is a custom JSON marshal function for the IssueFields structs.
@@ -138,7 +138,7 @@ func (i *IssueFields) MarshalJSON() ([]byte, error) {
 	unknowns, okay := m["Unknowns"]
 	if okay {
 		// if unknowns present, shift all key value from unknown to a level up
-		for key, value := range unknowns.(tcontainer.MarshalMap) {
+		for key, value := range unknowns.(map[string]interface{}) {
 			m[key] = value
 		}
 		delete(m, "Unknowns")
@@ -162,7 +162,7 @@ func (i *IssueFields) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	totalMap := tcontainer.NewMarshalMap()
+	totalMap := make(map[string]interface{})
 	err := json.Unmarshal(data, &totalMap)
 	if err != nil {
 		return err
@@ -183,7 +183,7 @@ func (i *IssueFields) UnmarshalJSON(data []byte) error {
 		}
 		// the first one is the json tag
 		key := options[0]
-		if _, okay := totalMap.Value(key); okay {
+		if _, okay := totalMap[key]; okay {
 			delete(totalMap, key)
 		}
 
@@ -508,9 +508,9 @@ type GetQueryOptions struct {
 	// Properties is the list of properties to return for the issue. By default no properties are returned.
 	Properties string `url:"properties,omitempty"`
 	// FieldsByKeys if true then fields in issues will be referenced by keys instead of ids
-	FieldsByKeys  bool `url:"fieldsByKeys,omitempty"`
-	UpdateHistory bool `url:"updateHistory,omitempty"`
-	ProjectKey string  `url:"projectKey,omitempty"`
+	FieldsByKeys  bool   `url:"fieldsByKeys,omitempty"`
+	UpdateHistory bool   `url:"updateHistory,omitempty"`
+	ProjectKey    string `url:"projectKey,omitempty"`
 }
 
 // CustomFields represents custom fields of JIRA
@@ -944,7 +944,7 @@ func (s *IssueService) DoTransitionWithPayload(ticketID, payload interface{}) (*
 func InitIssueWithMetaAndFields(metaProject *MetaProject, metaIssuetype *MetaIssueType, fieldsConfig map[string]string) (*Issue, error) {
 	issue := new(Issue)
 	issueFields := new(IssueFields)
-	issueFields.Unknowns = tcontainer.NewMarshalMap()
+	issueFields.Unknowns = make(map[string]interface{})
 
 	// map the field names the User presented to jira's internal key
 	allFields, _ := metaIssuetype.GetAllFields()
@@ -954,15 +954,15 @@ func InitIssueWithMetaAndFields(metaProject *MetaProject, metaIssuetype *MetaIss
 			return nil, fmt.Errorf("key %s is not found in the list of fields", key)
 		}
 
-		valueType, err := metaIssuetype.Fields.String(jiraKey + "/schema/type")
-		if err != nil {
-			return nil, err
+		valueType, ok := metaIssuetype.Fields[jiraKey].(map[string]interface{})["schema"].(map[string]interface{})["type"].(string)
+		if !ok {
+			return nil, errors.New("")
 		}
 		switch valueType {
 		case "array":
-			elemType, err := metaIssuetype.Fields.String(jiraKey + "/schema/items")
-			if err != nil {
-				return nil, err
+			elemType, ok := metaIssuetype.Fields[jiraKey].(map[string]interface{})["schema"].(map[string]interface{})["items"].(string)
+			if !ok {
+				return nil, errors.New("")
 			}
 			switch elemType {
 			case "component":

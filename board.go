@@ -149,8 +149,8 @@ func (s *BoardService) DeleteBoard(boardID int) (*Board, *Response, error) {
 // This only includes sprints that the user has permission to view.
 //
 // JIRA API docs: https://docs.atlassian.com/jira-software/REST/cloud/#agile/1.0/board/{boardId}/sprint
-func (s *BoardService) GetAllSprints(boardID string) ([]Sprint, *Response, error) {
-	apiEndpoint := fmt.Sprintf("rest/agile/1.0/board/%s/sprint", boardID)
+func (s *BoardService) GetAllSprints(boardID string, state string) ([]Sprint, *Response, error) {
+	apiEndpoint := fmt.Sprintf("rest/agile/1.0/board/%s/sprint?state=%s", boardID, state)
 	req, err := s.client.NewRequest("GET", apiEndpoint, nil)
 	if err != nil {
 		return nil, nil, err

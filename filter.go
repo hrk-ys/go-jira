@@ -16,7 +16,7 @@ type Filter struct {
 }
 
 func (s *FilterService) GetFilter(filterID int) (*Filter, *Response, error) {
-	apiEndpoint := fmt.Sprintf("rest/api/2/filter/%v", boardID)
+	apiEndpoint := fmt.Sprintf("rest/api/2/filter/%v", filterID)
 
 	req, err := s.client.NewRequest("GET", apiEndpoint, nil)
 	if err != nil {
